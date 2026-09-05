@@ -14,23 +14,26 @@ jobs:
     name: web-ext lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
 
       - name: Build dist folders
         run: ./build.sh
 
-      - name: Lint Firefox bundle (web-ext)
+      # web-ext is the Mozilla linter — the Firefox bundle is its proper
+      # target and must pass with zero errors.
+      - name: Lint Firefox bundle (web-ext, gating)
         run: npx --yes web-ext@8 lint --source-dir dist/firefox
 
-      # Chrome bundle uses Chromium-only APIs (offscreen, runtime.getContexts)
-      # that are runtime feature-detected but statically flagged — expect warnings.
-      - name: Lint Chrome bundle (warnings tolerated)
-        run: npx --yes web-ext@8 lint --source-dir dist/chrome --warnings-as-errors ""
+      # The Chrome bundle keeps Chromium-only forms (background.service_worker,
+      # offscreen) that Firefox's linter hard-errors on by design — advisory only.
+      - name: Lint Chrome bundle (advisory)
+        run: npx --yes web-ext@8 lint --source-dir dist/chrome
+        continue-on-error: true
 
       - name: Upload dist artifacts
         uses: actions/upload-artifact@v4
@@ -45,7 +48,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build dist folders
         run: ./build.sh
