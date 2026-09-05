@@ -1,0 +1,8 @@
+# Build output (regenerate with ./build.sh)
+dist/
+
+# macOS
+.DS_Store
+
+# Node (web-ext cache if run locally)
+node_modules/

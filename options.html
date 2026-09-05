@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ml1.app — My Links</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <header>
+    <h1><span class="logo">m</span> ml1 URL Shortener — My Links</h1>
+    <button id="btn-refresh">Refresh</button>
+  </header>
+
+  <div id="auth-warning" class="warning hidden">
+    Not signed in to Cloudflare Access — stats load after you sign in at
+    <a href="https://s.ml1.app/" target="_blank" rel="noopener">s.ml1.app</a>.
+    <button id="btn-relogin">Open s.ml1.app…</button>
+  </div>
+
+  <div id="error" class="error hidden"></div>
+
+  <p id="summary" class="muted hidden"></p>
+
+  <table id="links-table" class="hidden">
+    <thead>
+      <tr>
+        <th>Short link</th>
+        <th>Original URL</th>
+        <th class="num">Clicks</th>
+        <th class="num">Created</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="links-body"></tbody>
+  </table>
+
+  <p id="empty" class="muted hidden">No links yet — shorten one from the toolbar popup!</p>
+
+  <script src="options.js"></script>
+</body>
+</html>

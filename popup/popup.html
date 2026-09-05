@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <h1 class="brand"><span class="logo">m</span> ml1 URL Shortener</h1>
+
+    <div id="auth-warning" class="warning hidden">
+      Not signed in to Cloudflare Access.
+      <button id="btn-login">Sign in…</button>
+    </div>
+
+    <label class="field-label" for="input-url">URL</label>
+    <input id="input-url" type="url" spellcheck="false" autocomplete="off">
+
+    <label class="field-label" for="input-custom">Custom code <span class="muted">(optional)</span></label>
+    <input id="input-custom" type="text" spellcheck="false" autocomplete="off"
+           placeholder="e.g. my-link">
+
+    <button id="btn-shorten" class="primary">Shorten</button>
+
+    <div id="result" class="result hidden">
+      <div class="result-note" id="result-note"></div>
+      <div class="result-row">
+        <a id="result-link" href="#" target="_blank" rel="noopener"></a>
+        <button id="btn-copy" title="Copy">Copy</button>
+      </div>
+      <div class="result-original" id="result-original"></div>
+    </div>
+
+    <div id="error" class="error hidden"></div>
+
+    <footer>
+      <a href="#" id="btn-options">My links &amp; stats</a>
+    </footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
