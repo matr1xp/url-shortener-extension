@@ -1,0 +1,60 @@
+name: Lint & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  lint:
+    name: web-ext lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build dist folders
+        run: ./build.sh
+
+      - name: Lint Firefox bundle (web-ext)
+        run: npx --yes web-ext@8 lint --source-dir dist/firefox
+
+      # Chrome bundle uses Chromium-only APIs (offscreen, runtime.getContexts)
+      # that are runtime feature-detected but statically flagged — expect warnings.
+      - name: Lint Chrome bundle (warnings tolerated)
+        run: npx --yes web-ext@8 lint --source-dir dist/chrome --warnings-as-errors ""
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-dist
+          path: dist/*.zip
+          retention-days: 14
+
+  release:
+    name: Attach zips to release
+    needs: lint
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build dist folders
+        run: ./build.sh
+
+      - name: Create release (if missing) and upload zips
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+            || gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+                 --title "$GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" dist/*.zip --clobber
