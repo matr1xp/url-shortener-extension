@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ml1.app URL Shortener",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shorten links with your ml1.app shortener. Click the toolbar button to shorten the current tab, or right-click any link.",
   "permissions": ["activeTab", "contextMenus", "clipboardWrite", "storage"],
   "host_permissions": ["https://s.ml1.app/*"],
