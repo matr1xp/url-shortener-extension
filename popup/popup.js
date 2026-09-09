@@ -51,12 +51,21 @@ async function shorten() {
   els.btnShorten.disabled = true;
   els.btnShorten.textContent = "Shortening…";
 
+  // Honor the "Prefix my links" preference from the options page (issue #1).
+  let prefixEnabled = false;
+  try {
+    const stored = await chrome.storage.sync.get("prefixEnabled");
+    prefixEnabled = !!stored.prefixEnabled;
+  } catch (_) { /* storage unavailable — default off */ }
+
   try {
     const resp = await fetch(`${API_BASE}/api/shorten`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url, custom_code: customCode }),
+      body: JSON.stringify(prefixEnabled
+        ? { url, custom_code: customCode, prefix: true }
+        : { url, custom_code: customCode }),
     });
 
     if (resp.status === 401) {
