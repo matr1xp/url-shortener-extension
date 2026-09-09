@@ -88,11 +88,19 @@ async function shortenAndCopy(url) {
 }
 
 async function shorten(url) {
+  // Include the user's namespace prefix when the preference is enabled
+  // (options page → chrome.storage.sync.prefixEnabled, issue #1).
+  let prefixEnabled = false;
+  try {
+    const stored = await chrome.storage.sync.get("prefixEnabled");
+    prefixEnabled = !!stored.prefixEnabled;
+  } catch (_) { /* storage unavailable — default off */ }
+
   const resp = await fetch(`${API_BASE}/api/shorten`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify(prefixEnabled ? { url, prefix: true } : { url }),
   });
 
   if (resp.status === 401) {

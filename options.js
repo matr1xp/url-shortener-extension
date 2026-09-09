@@ -12,7 +12,97 @@ const els = {
   tbody: document.getElementById("links-body"),
   empty: document.getElementById("empty"),
   btnRefresh: document.getElementById("btn-refresh"),
+  prefixEnabled: document.getElementById("prefix-enabled"),
+  prefixInput: document.getElementById("prefix-input"),
+  prefixExample: document.getElementById("prefix-example"),
+  prefixStatus: document.getElementById("prefix-status"),
+  btnSavePrefix: document.getElementById("btn-save-prefix"),
 };
+
+// ── Prefix management (issue #1: multi-user namespaces) ─────────────────────
+
+const PREFIX_RE = /^[a-z0-9][a-z0-9-]{1,15}$/;
+
+function setPrefixExample(prefix) {
+  // Build with DOM APIs (not innerHTML) — keeps web-ext lint clean and
+  // avoids injecting anything unexpected.
+  els.prefixExample.textContent = "https://ml1.app/";
+  const b = document.createElement("b");
+  b.textContent = prefix || "your-prefix";
+  els.prefixExample.appendChild(b);
+  els.prefixExample.appendChild(document.createTextNode("/my-link"));
+}
+
+async function loadPrefix() {
+  // Local preference first (works signed-out), then server prefix
+  let stored = {};
+  try {
+    stored = await chrome.storage.sync.get(["prefixEnabled", "prefix"]);
+  } catch (_) { /* Firefox without sync storage */ }
+  els.prefixEnabled.checked = !!stored.prefixEnabled;
+  if (stored.prefix) {
+    els.prefixInput.value = stored.prefix;
+    setPrefixExample(stored.prefix);
+  }
+
+  // Refresh from server (also lazily creates the prefix on first use)
+  try {
+    const resp = await fetch(`${API_BASE}/api/prefix`, { credentials: "include" });
+    if (resp.status === 401) return; // signed out — local value is enough
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (data.prefix) {
+      els.prefixInput.value = data.prefix;
+      setPrefixExample(data.prefix);
+      await chrome.storage.sync.set({ prefix: data.prefix }).catch(() => {});
+    }
+  } catch (_) { /* offline — keep local */ }
+}
+
+async function togglePrefix(enabled) {
+  await chrome.storage.sync.set({ prefixEnabled: enabled }).catch(() => {});
+}
+
+async function savePrefix() {
+  const prefix = els.prefixInput.value.trim().toLowerCase();
+  hide(els.error);
+
+  if (!PREFIX_RE.test(prefix)) {
+    els.prefixStatus.textContent =
+      "Prefix must be 2–16 lowercase chars: a-z, 0-9, - (not starting with -).";
+    return;
+  }
+
+  els.btnSavePrefix.disabled = true;
+  try {
+    const resp = await fetch(`${API_BASE}/api/prefix`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prefix }),
+    });
+    if (resp.status === 401) {
+      show(els.authWarning);
+      return;
+    }
+    const body = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      els.prefixStatus.textContent = body.error || `Save failed (${resp.status})`;
+      return;
+    }
+    els.prefixStatus.textContent = `Prefix saved: ${body.prefix}`;
+    els.prefixInput.value = body.prefix;
+    setPrefixExample(body.prefix);
+    await chrome.storage.sync.set({ prefix: body.prefix }).catch(() => {});
+  } catch (_) {
+    els.prefixStatus.textContent = "Network error — is s.ml1.app reachable?";
+  } finally {
+    els.btnSavePrefix.disabled = false;
+  }
+}
+
+els.prefixEnabled.addEventListener("change", () => togglePrefix(els.prefixEnabled.checked));
+els.btnSavePrefix.addEventListener("click", savePrefix);
 
 async function loadStats() {
   hide(els.error);
@@ -98,7 +188,9 @@ function renderRow(link) {
 }
 
 async function deleteLink(shortCode, rowEl) {
-  const code = shortCode.split("/").pop();
+  // shortCode may be prefixed ('ms/my-link') — keep the full code; the API
+  // route is /api/delete/<path:short_code> and expects prefix+code together.
+  const code = shortCode;
   if (!confirm(`Delete ${shortCode}? This cannot be undone.`)) return;
 
   try {
@@ -145,4 +237,5 @@ els.btnRelogin.addEventListener("click", () =>
   chrome.tabs.create({ url: `${API_BASE}/` })
 );
 
+loadPrefix();
 loadStats();

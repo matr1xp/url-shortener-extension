@@ -19,6 +19,24 @@
 
   <div id="error" class="error hidden"></div>
 
+  <section id="prefix-section">
+    <h2>Link prefix</h2>
+    <p class="muted">
+      Prefix your short links with your own namespace:
+      <code id="prefix-example">https://ml1.app/<b>your-prefix</b>/my-link</code>
+    </p>
+    <div class="prefix-row">
+      <label for="prefix-enabled">
+        <input type="checkbox" id="prefix-enabled"> Prefix my links
+      </label>
+    </div>
+    <div class="prefix-row">
+      <input type="text" id="prefix-input" placeholder="your-prefix" maxlength="16" autocomplete="off">
+      <button id="btn-save-prefix">Save prefix</button>
+    </div>
+    <p id="prefix-status" class="muted"></p>
+  </section>
+
   <p id="summary" class="muted hidden"></p>
 
   <table id="links-table" class="hidden">
