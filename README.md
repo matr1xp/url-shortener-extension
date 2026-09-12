@@ -38,6 +38,7 @@ s.ml1.app, and you're done (no tokens stored in the extension, ever).
 
 ```
 manifest.json        MV3 manifest (gecko id included for Firefox)
+api.js               Shared API helper: CF Access redirect → auth detection
 background.js        Service worker: context menu, shortcut, clipboard proxy
 popup/               Toolbar popup: shorten current tab / arbitrary URL
 options.html/js/css  My Links: stats table + delete

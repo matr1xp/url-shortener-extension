@@ -23,7 +23,7 @@ mkdir -p "$DIST/chrome" "$DIST/firefox"
 copy_common() {
   local dest="$1"
   mkdir -p "$dest/popup" "$dest/icons"
-  cp "$SRC/manifest.json" "$SRC/background.js" "$SRC/options.html" \
+  cp "$SRC/manifest.json" "$SRC/api.js" "$SRC/background.js" "$SRC/options.html" \
      "$SRC/options.css" "$SRC/options.js" \
      "$SRC/offscreen.html" "$SRC/offscreen.js" "$dest/"
   cp "$SRC/popup/popup.html" "$SRC/popup/popup.css" "$SRC/popup/popup.js" "$dest/popup/"
@@ -65,8 +65,10 @@ python3 - "$DIST/firefox/manifest.json" <<'EOF'
 import json, sys
 p = sys.argv[1]
 m = json.load(open(p))
-# Firefox prefers the event-page form over background.service_worker
-m["background"] = {"scripts": ["background.js"]}
+# Firefox prefers the event-page form over background.service_worker.
+# api.js must come first — background.js uses apiFetch at call time and
+# skips its importScripts() fallback when the global is already defined.
+m["background"] = {"scripts": ["api.js", "background.js"]}
 json.dump(m, open(p, "w"), indent=2)
 EOF
 
@@ -78,6 +80,8 @@ for browser in ("chrome", "firefox"):
     m = json.load(open(p))
     assert m["manifest_version"] == 3
     assert "service_worker" in m["background"] or "scripts" in m["background"]
+    import os
+    assert os.path.exists(f"{sys.argv[1]}/{browser}/api.js"), "api.js missing from bundle"
     print(f"✅ {browser} manifest OK (v{m['version']}, {len(m['permissions'])} permissions)")
 EOF
 

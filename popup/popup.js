@@ -1,8 +1,7 @@
 // ml1.app URL Shortener — popup logic.
-// Fetches directly from the API with credentials — the browser's Cloudflare
-// Access session cookie (CF_Authorization) rides along automatically.
-
-const API_BASE = "https://s.ml1.app";
+// Fetches go through apiFetch() (api.js) with credentials — the browser's
+// Cloudflare Access session cookie (CF_Authorization) rides along
+// automatically, and the Access login redirect is detected there (issue #5).
 
 const els = {
   authWarning: document.getElementById("auth-warning"),
@@ -59,16 +58,15 @@ async function shorten() {
   } catch (_) { /* storage unavailable — default off */ }
 
   try {
-    const resp = await fetch(`${API_BASE}/api/shorten`, {
+    const { authRequired, resp } = await apiFetch("/api/shorten", {
       method: "POST",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(prefixEnabled
         ? { url, custom_code: customCode, prefix: true }
         : { url, custom_code: customCode }),
     });
 
-    if (resp.status === 401) {
+    if (authRequired) {
       show(els.authWarning);
       return;
     }

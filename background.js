@@ -1,8 +1,13 @@
 // ml1.app URL Shortener — background service worker (MV3)
 // Registers context menu + keyboard shortcut at top level (required for
 // event-driven service worker wake-up — do NOT move inside onInstalled).
-
-const API_BASE = "https://s.ml1.app";
+//
+// api.js provides API_BASE + apiFetch, which detects the Cloudflare Access
+// login redirect served instead of a 401 (issue #5). Firefox preloads it via
+// background.scripts; Chromium's service worker has to pull it in itself.
+if (typeof apiFetch === "undefined") {
+  importScripts("api.js");
+}
 
 // ── Context menu ───────────────────────────────────────────────────────────
 
@@ -96,14 +101,13 @@ async function shorten(url) {
     prefixEnabled = !!stored.prefixEnabled;
   } catch (_) { /* storage unavailable — default off */ }
 
-  const resp = await fetch(`${API_BASE}/api/shorten`, {
+  const { authRequired, resp } = await apiFetch("/api/shorten", {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(prefixEnabled ? { url, prefix: true } : { url }),
   });
 
-  if (resp.status === 401) {
+  if (authRequired) {
     throw { authRequired: true, message: "Cloudflare Access login required" };
   }
   if (!resp.ok) {
