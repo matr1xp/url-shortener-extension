@@ -143,7 +143,11 @@ els.btnCopy.addEventListener("click", copyButton);
 els.btnLogin.addEventListener("click", () => chrome.tabs.create({ url: `${API_BASE}/` }));
 els.btnOptions.addEventListener("click", (e) => {
   e.preventDefault();
-  chrome.runtime.openOptionsPage();
+  // Issue #8: "My links & stats" opens the main website dashboard (which
+  // shows the same links/stats plus prefix management), not the local
+  // options page. Options remain reachable via the extension's context
+  // menu / chrome://extensions.
+  chrome.tabs.create({ url: `${API_BASE}/` });
 });
 
 init();
