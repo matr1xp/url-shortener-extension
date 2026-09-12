@@ -1,7 +1,6 @@
 // ml1.app URL Shortener — options page: your links, clicks, delete.
 // Uses GET /api/stats and DELETE /api/delete/<code> with CF Access cookies.
-
-const API_BASE = "https://s.ml1.app";
+// API_BASE + apiFetch come from api.js (loaded first in options.html).
 
 const els = {
   authWarning: document.getElementById("auth-warning"),
@@ -47,8 +46,8 @@ async function loadPrefix() {
 
   // Refresh from server (also lazily creates the prefix on first use)
   try {
-    const resp = await fetch(`${API_BASE}/api/prefix`, { credentials: "include" });
-    if (resp.status === 401) return; // signed out — local value is enough
+    const { authRequired, resp } = await apiFetch("/api/prefix");
+    if (authRequired) return; // signed out — local value is enough
     if (!resp.ok) return;
     const data = await resp.json();
     if (data.prefix) {
@@ -75,13 +74,12 @@ async function savePrefix() {
 
   els.btnSavePrefix.disabled = true;
   try {
-    const resp = await fetch(`${API_BASE}/api/prefix`, {
+    const { authRequired, resp } = await apiFetch("/api/prefix", {
       method: "PUT",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prefix }),
     });
-    if (resp.status === 401) {
+    if (authRequired) {
       show(els.authWarning);
       return;
     }
@@ -108,17 +106,15 @@ async function loadStats() {
   hide(els.error);
   hide(els.authWarning);
 
-  let resp;
+  let authRequired, resp;
   try {
-    resp = await fetch(`${API_BASE}/api/stats`, {
-      credentials: "include",
-    });
+    ({ authRequired, resp } = await apiFetch("/api/stats"));
   } catch (_) {
     showError("Network error — is s.ml1.app reachable?");
     return;
   }
 
-  if (resp.status === 401) {
+  if (authRequired) {
     show(els.authWarning);
     hideTable();
     return;
@@ -194,11 +190,10 @@ async function deleteLink(shortCode, rowEl) {
   if (!confirm(`Delete ${shortCode}? This cannot be undone.`)) return;
 
   try {
-    const resp = await fetch(`${API_BASE}/api/delete/${code}`, {
+    const { authRequired, resp } = await apiFetch(`/api/delete/${code}`, {
       method: "DELETE",
-      credentials: "include",
     });
-    if (resp.status === 401) {
+    if (authRequired) {
       show(els.authWarning);
       return;
     }
