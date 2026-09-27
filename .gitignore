@@ -4,6 +4,9 @@ dist/
 # Rendered privacy page (regenerate with scripts/build-privacy-html.py)
 dist-privacy/
 
+# Store graphics (regenerate with scripts/build-store-assets.py)
+dist-store/
+
 # macOS
 .DS_Store
 
