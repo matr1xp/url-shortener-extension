@@ -1,6 +1,9 @@
 # Build output (regenerate with ./build.sh)
 dist/
 
+# Rendered privacy page (regenerate with scripts/build-privacy-html.py)
+dist-privacy/
+
 # macOS
 .DS_Store
 
